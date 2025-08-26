@@ -6,7 +6,7 @@ import ClientWrapper from './client-wrapper';
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Starchive - Find the Perfect Tools for Your Next Project',
+  title: 'Starchive - Find the Right Tools for Your Next Project',
   description: 'Discover curated repositories from GitHub stars to help you find the right technology for your project.',
 }
 
