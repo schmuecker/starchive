@@ -8,14 +8,23 @@ interface RepoGridProps {
 }
 
 export const RepoGrid = memo(({ repos }: RepoGridProps) => {
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const [windowWidth, setWindowWidth] = useState(1200); // Default to desktop width
+  const [isClient, setIsClient] = useState(false);
   
+  // Set client flag and window width after hydration
+  useEffect(() => {
+    setIsClient(true);
+    setWindowWidth(window.innerWidth);
+  }, []);
+
   // Update window width on resize
   useEffect(() => {
+    if (!isClient) return;
+    
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [isClient]);
 
   // Calculate columns based on current window width
   const columnCount = React.useMemo(() => {

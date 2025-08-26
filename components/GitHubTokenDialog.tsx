@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Key, ExternalLink } from "lucide-react";
-import { setGitHubToken, getGitHubToken } from "@/services/githubApi";
+// Note: GitHub token management is now server-side only
+// This component is kept for UI consistency but doesn't affect server-side rate limits
 import { useToast } from "@/hooks/use-toast";
 
 interface GitHubTokenDialogProps {
@@ -25,28 +28,26 @@ export const GitHubTokenDialog = ({ onTokenUpdate }: GitHubTokenDialogProps) => 
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   
-  const hasToken = !!getGitHubToken();
+  const hasToken = false; // Server-side tokens only
 
   const handleSave = () => {
-    setGitHubToken(token);
     setOpen(false);
     setToken("");
     
     toast({
-      title: "Token saved",
-      description: "GitHub token has been saved to localStorage",
+      title: "Note",
+      description: "GitHub API requests are now handled server-side with ISR caching",
     });
     
     onTokenUpdate?.();
   };
 
   const handleRemove = () => {
-    setGitHubToken("");
     setOpen(false);
     
     toast({
-      title: "Token removed",
-      description: "GitHub token has been removed",
+      title: "Note", 
+      description: "GitHub API requests are now handled server-side with ISR caching",
     });
     
     onTokenUpdate?.();

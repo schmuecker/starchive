@@ -27,6 +27,21 @@ export interface GitHubApiRepo {
   forks_count: number;
 }
 
+export interface GitHubUser {
+  login: string;
+  name: string;
+  bio: string | null;
+  avatar_url: string;
+  html_url: string;
+  followers: number;
+  following: number;
+  public_repos: number;
+  location: string | null;
+  blog: string | null;
+  company: string | null;
+  created_at: string;
+}
+
 export class GitHubApiError extends Error {
   constructor(
     message: string,
@@ -39,41 +54,12 @@ export class GitHubApiError extends Error {
   }
 }
 
-import { db } from './database';
-
-export const fetchUserStars = async (username: string, page = 1, perPage = 100): Promise<{
-  repos: GitHubApiRepo[];
-  hasMore: boolean;
-  rateLimitInfo: {
-    remaining: number;
-    reset: number;
-  };
-}> => {
-  // Check cache first
-  const now = Date.now();
-  const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
-  
-  try {
-    const cachedData = await db.cachedStars.where('username').equals(username).first();
-    
-    if (cachedData) {
-      const isValidCache = now - cachedData.timestamp < CACHE_DURATION;
-      if (isValidCache) {
-        return {
-          repos: cachedData.repos || [],
-          hasMore: false,
-          rateLimitInfo: cachedData.rateLimitInfo || { remaining: 0, reset: 0 },
-        };
-      }
-    }
-  } catch (error) {
-    console.warn('Failed to read from cache:', error);
-  }
-
-  const token = localStorage.getItem("github_token");
+export const fetchUserProfileServer = async (username: string): Promise<GitHubUser> => {
+  const token = process.env.GITHUB_TOKEN;
   
   const headers: Record<string, string> = {
     "Accept": "application/vnd.github.v3+json",
+    "User-Agent": "Starchive/1.0",
   };
 
   if (token) {
@@ -81,7 +67,51 @@ export const fetchUserStars = async (username: string, page = 1, perPage = 100):
   }
 
   try {
-    // Fetch all pages at once for better caching
+    const response = await fetch(
+      `${GITHUB_API_BASE}/users/${username}`,
+      { 
+        headers,
+        cache: 'force-cache'
+      }
+    );
+
+    if (!response.ok) {
+      throw new GitHubApiError(
+        `GitHub API error: ${response.status} ${response.statusText}`,
+        response.status
+      );
+    }
+
+    const user: GitHubUser = await response.json();
+    return user;
+  } catch (error) {
+    if (error instanceof GitHubApiError) {
+      throw error;
+    }
+    throw new GitHubApiError(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+export const fetchUserStarsServer = async (username: string): Promise<{
+  repos: GitHubApiRepo[];
+  user: GitHubUser;
+  rateLimitInfo: {
+    remaining: number;
+    reset: number;
+  };
+}> => {
+  const token = process.env.GITHUB_TOKEN;
+  
+  const headers: Record<string, string> = {
+    "Accept": "application/vnd.github.v3+json",
+    "User-Agent": "Starchive/1.0",
+  };
+
+  if (token) {
+    headers["Authorization"] = `token ${token}`;
+  }
+
+  try {
     let allRepos: GitHubApiRepo[] = [];
     let currentPage = 1;
     let hasMore = true;
@@ -90,7 +120,10 @@ export const fetchUserStars = async (username: string, page = 1, perPage = 100):
     while (hasMore && currentPage <= 10) { // Limit to 1000 repos max
       const response = await fetch(
         `${GITHUB_API_BASE}/users/${username}/starred?page=${currentPage}&per_page=100`,
-        { headers }
+        { 
+          headers,
+          cache: 'force-cache'
+        }
       );
 
       rateLimitInfo.remaining = parseInt(response.headers.get("X-RateLimit-Remaining") || "0");
@@ -114,35 +147,37 @@ export const fetchUserStars = async (username: string, page = 1, perPage = 100):
       currentPage++;
 
       if (repos.length < 100) {
-        hasMore = false; // If we get less than requested, we're at the end
-      }
-
-      // Small delay between requests
-      if (hasMore) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        hasMore = false;
       }
     }
 
-    // Cache the complete result
-    try {
-      await db.cachedStars.put({
-        username,
-        repos: allRepos,
-        rateLimitInfo,
-        timestamp: now,
-      });
-    } catch (error) {
-      console.warn('Failed to cache data:', error);
-    }
+    // Fetch thumbnails for first 20 repos
+    const reposWithThumbnails = await Promise.all(
+      allRepos.slice(0, 20).map(async (repo, index) => {
+        try {
+          // Add delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, index * 100));
+          const thumbnail = await extractImageFromReadmeServer(repo.full_name, token);
+          return { ...repo, thumbnail };
+        } catch (error) {
+          console.warn(`Failed to fetch thumbnail for ${repo.full_name}:`, error);
+          return repo;
+        }
+      })
+    );
 
-    // Return paginated result for the requested page
-    const startIndex = (page - 1) * perPage;
-    const endIndex = startIndex + perPage;
-    const paginatedRepos = allRepos.slice(startIndex, endIndex);
+    // Combine repos with thumbnails and remaining repos
+    const finalRepos = [
+      ...reposWithThumbnails,
+      ...allRepos.slice(20)
+    ];
+
+    // Fetch user profile data
+    const user = await fetchUserProfileServer(username);
 
     return {
-      repos: paginatedRepos,
-      hasMore: endIndex < allRepos.length,
+      repos: finalRepos,
+      user,
       rateLimitInfo,
     };
   } catch (error) {
@@ -153,9 +188,10 @@ export const fetchUserStars = async (username: string, page = 1, perPage = 100):
   }
 };
 
-export const extractImageFromReadme = async (repoFullName: string, token?: string): Promise<string | null> => {
+export const extractImageFromReadmeServer = async (repoFullName: string, token?: string): Promise<string | null> => {
   const headers: Record<string, string> = {
     "Accept": "application/vnd.github.v3+json",
+    "User-Agent": "Starchive/1.0",
   };
 
   if (token) {
@@ -163,20 +199,22 @@ export const extractImageFromReadme = async (repoFullName: string, token?: strin
   }
 
   try {
-    // First try README.md, then README, then readme.md
     const readmeFiles = ['README.md', 'README', 'readme.md', 'Readme.md'];
     
     for (const filename of readmeFiles) {
       try {
         const response = await fetch(
           `${GITHUB_API_BASE}/repos/${repoFullName}/contents/${filename}`,
-          { headers }
+          { 
+            headers,
+            cache: 'force-cache'
+          }
         );
         
         if (response.ok) {
           const data = await response.json();
           if (data.content) {
-            const content = atob(data.content);
+            const content = Buffer.from(data.content, 'base64').toString('utf-8');
             
             // Extract images from markdown, excluding badges/shields
             const imageRegex = /!\[.*?\]\((.*?)\)|<img[^>]+src=["']([^"']+)["']/g;
@@ -220,17 +258,15 @@ export const extractImageFromReadme = async (repoFullName: string, token?: strin
               /badge.*\.png/i
             ];
             
-            let match;
+            let match: RegExpExecArray | null;
             while ((match = imageRegex.exec(content)) !== null) {
               let imageUrl = match[1] || match[2];
               
               if (!imageUrl) continue;
               
-              // Check if this is a badge/shield URL
               const isBadge = badgePatterns.some(pattern => pattern.test(imageUrl));
               if (isBadge) continue;
               
-              // Convert relative URLs to absolute URLs
               if (!imageUrl.startsWith('http')) {
                 if (imageUrl.startsWith('./')) {
                   imageUrl = imageUrl.substring(2);
@@ -247,7 +283,6 @@ export const extractImageFromReadme = async (repoFullName: string, token?: strin
           break;
         }
       } catch (error) {
-        // Continue to next filename
         continue;
       }
     }
@@ -256,25 +291,5 @@ export const extractImageFromReadme = async (repoFullName: string, token?: strin
   } catch (error) {
     console.warn(`Failed to fetch README for ${repoFullName}:`, error);
     return null;
-  }
-};
-
-export const setGitHubToken = (token: string) => {
-  if (token.trim()) {
-    localStorage.setItem("github_token", token.trim());
-  } else {
-    localStorage.removeItem("github_token");
-  }
-};
-
-export const getGitHubToken = (): string | null => {
-  return localStorage.getItem("github_token");
-};
-
-export const clearStarsCache = async (username: string) => {
-  try {
-    await db.cachedStars.where('username').equals(username).delete();
-  } catch (error) {
-    console.warn('Failed to clear cache:', error);
   }
 };

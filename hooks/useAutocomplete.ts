@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { GitHubRepo } from "@/types/repo";
 import { technologySynonyms } from "@/data/synonymMaps";
 import Fuse from "fuse.js";
@@ -77,12 +77,12 @@ export const useAutocomplete = (repos: GitHubRepo[]) => {
     });
   }, [suggestions]);
 
-  const getSuggestions = (query: string, limit = 5): SuggestionItem[] => {
+  const getSuggestions = useCallback((query: string, limit = 5): SuggestionItem[] => {
     if (!query.trim()) return [];
     
     const results = fuse.search(query);
     return results.slice(0, limit).map(result => result.item);
-  };
+  }, [fuse]);
 
   return {
     suggestions,
