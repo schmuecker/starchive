@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <Script defer src="http://analytics.prosa.space/script.js" data-website-id="985cd0fd-8bb1-4ef7-a586-83ca85350dcf" />
+        <Script defer src="https://analytics.prosa.space/script.js" data-website-id="985cd0fd-8bb1-4ef7-a586-83ca85350dcf" />
       </head>
       <body className={inter.className}>
         <ClientWrapper>
