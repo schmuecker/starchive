@@ -87,6 +87,9 @@ export const SearchBar = ({ value, onChange, onSearch, placeholder = "What do yo
   const handleSelect = (suggestion: SuggestionItem) => {
     onChange(suggestion.value);
     setOpen(false);
+    if (onSearch) {
+      onSearch();
+    }
   };
 
   // Group suggestions by type for better organization
@@ -118,7 +121,12 @@ export const SearchBar = ({ value, onChange, onSearch, placeholder = "What do yo
         </div>
       </div>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandDialog open={open} onOpenChange={(newOpen) => {
+        setOpen(newOpen);
+        if (!newOpen && value.trim() && onSearch) {
+          onSearch();
+        }
+      }}>
         <Command>
           <CommandInput 
             placeholder={placeholder}
@@ -132,7 +140,7 @@ export const SearchBar = ({ value, onChange, onSearch, placeholder = "What do yo
             }}
           />
           <CommandList>
-            <CommandEmpty>No suggestions found.</CommandEmpty>
+            {value.trim() && <CommandEmpty>No suggestions found.</CommandEmpty>}
             {Object.entries(groupedSuggestions).map(([type, typeSuggestions]) => (
               <CommandGroup key={type} heading={getSuggestionLabel(type as SuggestionItem['type'])}>
                 {typeSuggestions.map((suggestion, index) => {
