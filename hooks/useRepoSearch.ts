@@ -87,14 +87,16 @@ export const useRepoSearch = (repos: GitHubRepo[] = []) => {
       results = fuzzyMatches;
     }
 
-    // Apply language filter
+    // Apply language filter (AND logic - repo must match ALL selected languages)
     if (filters.language.length > 0) {
-      results = results.filter(repo => 
-        repo.language && filters.language.includes(repo.language)
-      );
+      results = results.filter(repo => {
+        if (!repo.language) return false;
+        // For language, we can only have one language per repo, so use includes
+        return filters.language.includes(repo.language);
+      });
     }
 
-    // Apply technology filter (check topics and description)
+    // Apply technology filter (AND logic - repo must match ALL selected technologies)
     if (filters.technology.length > 0) {
       results = results.filter(repo => {
         const techText = [
@@ -103,30 +105,30 @@ export const useRepoSearch = (repos: GitHubRepo[] = []) => {
           repo.name
         ].join(" ").toLowerCase();
         
-        return filters.technology.some(tech => 
+        return filters.technology.every(tech => 
           techText.includes(tech.toLowerCase())
         );
       });
     }
 
-    // Apply author filter
+    // Apply author filter (AND logic - for multiple authors, we need repos from ANY author as repos can only have one author)
     if (filters.author.length > 0) {
       results = results.filter(repo =>
         filters.author.includes(repo.owner.login)
       );
     }
 
-    // Apply license filter
+    // Apply license filter (AND logic - for multiple licenses, we need repos with ANY license as repos can only have one license)
     if (filters.license.length > 0) {
       results = results.filter(repo => 
         repo.license && filters.license.includes(repo.license.spdx_id)
       );
     }
 
-    // Apply topics filter
+    // Apply topics filter (AND logic - repo must have ALL selected topics)
     if (filters.topics.length > 0) {
       results = results.filter(repo => 
-        filters.topics.some(topic => repo.topics.includes(topic))
+        filters.topics.every(topic => repo.topics.includes(topic))
       );
     }
 
