@@ -1,15 +1,15 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Star, GitFork, Calendar, ExternalLink, User } from "lucide-react";
+import { Star, GitFork, User } from "lucide-react";
 import { GitHubRepo } from "@/types/repo";
 import { getOrGenerateRepoThumbnail } from "@/utils/thumbnailGenerator";
 
 interface RepoCardProps {
   repo: GitHubRepo;
+  onTagClick?: (tag: string) => void;
 }
 
-export const RepoCard = ({ repo }: RepoCardProps) => {
+export const RepoCard = ({ repo, onTagClick }: RepoCardProps) => {
   const formatStars = (stars: number) => {
     if (stars < 100) {
       return "< 100";
@@ -93,7 +93,16 @@ export const RepoCard = ({ repo }: RepoCardProps) => {
             {repo.topics.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {repo.topics.slice(0, 3).map(topic => (
-                  <Badge key={topic} variant="secondary" className="text-xs px-2 py-0.5 h-5 flex-shrink-0">
+                  <Badge 
+                    key={topic} 
+                    variant="secondary" 
+                    className="text-xs px-2 py-0.5 h-5 flex-shrink-0 cursor-pointer hover:bg-secondary/80 transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onTagClick?.(topic);
+                    }}
+                  >
                     {topic}
                   </Badge>
                 ))}

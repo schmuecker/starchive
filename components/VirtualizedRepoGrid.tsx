@@ -5,9 +5,10 @@ import { GitHubRepo } from "@/types/repo";
 
 interface RepoGridProps {
   repos: GitHubRepo[];
+  onTagClick?: (tag: string) => void;
 }
 
-export const RepoGrid = memo(({ repos }: RepoGridProps) => {
+export const RepoGrid = memo(({ repos, onTagClick }: RepoGridProps) => {
   const [windowWidth, setWindowWidth] = useState(1200); // Default to desktop width
   const [isClient, setIsClient] = useState(false);
   
@@ -89,7 +90,7 @@ export const RepoGrid = memo(({ repos }: RepoGridProps) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
               {rowRepos.map((repo) => (
                 <div key={repo.id}>
-                  <RepoCard repo={repo} />
+                  <RepoCard repo={repo} onTagClick={onTagClick} />
                 </div>
               ))}
             </div>
