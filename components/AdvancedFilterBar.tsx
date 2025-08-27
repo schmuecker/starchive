@@ -119,6 +119,35 @@ export const FilterBar = ({
                 </div>
 
                 <div className="space-y-6">
+                  {/* Technology Filter */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                      <Code className="h-3 w-3" />
+                      Technologies
+                    </Label>
+                    <div className="flex flex-wrap gap-1">
+                      <Button 
+                        variant={!filters.technology.length ? "default" : "secondary"} 
+                        size="sm" 
+                        onClick={() => updateFilter('technology', [])} 
+                        className="h-6 px-2 text-xs"
+                      >
+                        All
+                      </Button>
+                      {availableTechnologies.map(tech => (
+                        <Button 
+                          key={tech}
+                          variant={filters.technology.includes(tech) ? "default" : "secondary"} 
+                          size="sm" 
+                          onClick={() => toggleArrayFilter('technology', tech)} 
+                          className="h-6 px-2 text-xs"
+                        >
+                          {tech}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Popularity Filter */}
                   <div className="space-y-2">
                     <Label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
