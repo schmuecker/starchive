@@ -117,7 +117,7 @@ export const fetchUserStarsServer = async (username: string): Promise<{
     let hasMore = true;
     let rateLimitInfo = { remaining: 0, reset: 0 };
 
-    while (hasMore && currentPage <= 10) { // Limit to 1000 repos max
+    while (hasMore) { // Fetch all starred repos
       const response = await fetch(
         `${GITHUB_API_BASE}/users/${username}/starred?page=${currentPage}&per_page=100`,
         { 
