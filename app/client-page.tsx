@@ -60,6 +60,7 @@ export default function ClientHomePage({ initialRepos }: ClientHomePageProps) {
     availableAuthors,
     availableLicenses,
     availableTopics,
+    availableTopTags,
     availableTechnologies
   } = useRepoSearch(repos);
 
@@ -75,35 +76,24 @@ export default function ClientHomePage({ initialRepos }: ClientHomePageProps) {
         />
       </div>
 
-      {/* Filter Tabs */}
+      {/* Top Tags */}
       <div className="flex flex-wrap justify-center gap-2 mb-8">
-        <Button 
-          variant={!filters.technology.length ? "default" : "secondary"} 
-          size="sm" 
-          onClick={() => setFilters({
-            ...filters,
-            technology: []
-          })} 
-          className="rounded-full"
-        >
-          Popular
-        </Button>
-        {availableTechnologies.map(tech => (
+        {availableTopTags.map(tag => (
           <Button 
-            key={tech}
-            variant={filters.technology.includes(tech) ? "default" : "secondary"} 
+            key={tag}
+            variant={filters.topics.includes(tag) ? "default" : "secondary"} 
             size="sm" 
             onClick={() => {
               setFilters({
                 ...filters,
-                technology: filters.technology.includes(tech) 
-                  ? filters.technology.filter(t => t !== tech) 
-                  : [...filters.technology, tech]
+                topics: filters.topics.includes(tag) 
+                  ? filters.topics.filter(t => t !== tag) 
+                  : [...filters.topics, tag]
               });
             }} 
             className="rounded-full"
           >
-            {tech}
+            #{tag}
           </Button>
         ))}
       </div>
