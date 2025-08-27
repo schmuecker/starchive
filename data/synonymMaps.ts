@@ -27,12 +27,13 @@ export const expandSearchTerms = (query: string): string[] => {
   
   terms.forEach(term => {
     Object.entries(technologySynonyms).forEach(([key, synonyms]) => {
-      if (key.includes(term) || synonyms.some(syn => syn.includes(term))) {
+      // Only exact matches or direct synonyms, not partial matches
+      if (key === term || synonyms.includes(term)) {
         expandedTerms.add(key);
-        synonyms.forEach(syn => expandedTerms.add(syn));
+        synonyms.slice(0, 3).forEach(syn => expandedTerms.add(syn)); // Limit synonyms
       }
     });
   });
   
-  return Array.from(expandedTerms);
+  return Array.from(expandedTerms).slice(0, 8); // Limit total expanded terms
 };

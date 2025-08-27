@@ -1,11 +1,11 @@
 import { useState, useMemo, useCallback } from "react";
 import { GitHubRepo, RepoFilter } from "@/types/repo";
 import { expandSearchTerms } from "@/data/synonymMaps";
-import { useDebounced } from "@/hooks/useDebounced";
 import Fuse from "fuse.js";
 
 export const useRepoSearch = (repos: GitHubRepo[] = []) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeSearchQuery, setActiveSearchQuery] = useState("");
   const [filters, setFilters] = useState<RepoFilter>({
     technology: [],
     popularity: { min: 0, max: 200000 },
@@ -27,8 +27,9 @@ export const useRepoSearch = (repos: GitHubRepo[] = []) => {
     maxIssues: null,
   });
 
-  // Debounce search query for better performance
-  const debouncedSearchQuery = useDebounced(searchQuery, 150);
+  const triggerSearch = useCallback(() => {
+    setActiveSearchQuery(searchQuery);
+  }, [searchQuery]);
 
   // Memoize Fuse instance for better performance
   const fuseInstance = useMemo(() => {
@@ -40,9 +41,11 @@ export const useRepoSearch = (repos: GitHubRepo[] = []) => {
         { name: "topics", weight: 0.2 },
         { name: "language", weight: 0.2 }
       ],
-      threshold: 0.4,
-      distance: 100,
+      threshold: 0.3, // More restrictive for better performance
+      distance: 50,   // Reduced distance for faster matching
       includeScore: true,
+      ignoreLocation: true, // Ignore location for faster search
+      findAllMatches: false, // Stop at first match for better performance
     });
   }, [repos]);
 
@@ -60,23 +63,25 @@ export const useRepoSearch = (repos: GitHubRepo[] = []) => {
     let results = repos;
 
     // Apply search query with fuzzy matching and synonym expansion
-    if (debouncedSearchQuery.trim()) {
-      const expandedTerms = expandSearchTerms(debouncedSearchQuery);
-      
-      // Search with original query
-      const fuseResults = fuseInstance.search(debouncedSearchQuery);
-      let fuzzyMatches = fuseResults.map(result => result.item);
+    if (activeSearchQuery.trim()) {
+      const expandedTerms = expandSearchTerms(activeSearchQuery);
+      const seenIds = new Set<number>();
+      let fuzzyMatches: GitHubRepo[] = [];
 
-      // Also search with expanded terms for synonym matching
-      expandedTerms.forEach(term => {
-        if (term !== debouncedSearchQuery.toLowerCase()) {
-          const termResults = fuseInstance.search(term);
-          termResults.forEach(result => {
-            if (!fuzzyMatches.find(repo => repo.id === result.item.id)) {
-              fuzzyMatches.push(result.item);
-            }
-          });
-        }
+      // Combine all search terms into one query for better performance
+      const allTerms = [activeSearchQuery, ...expandedTerms.filter(term => term !== activeSearchQuery.toLowerCase())];
+      
+      // Limit expanded terms to avoid performance issues
+      const limitedTerms = allTerms.slice(0, 5);
+      
+      limitedTerms.forEach(term => {
+        const termResults = fuseInstance.search(term, { limit: 50 }); // Limit results per term
+        termResults.forEach(result => {
+          if (!seenIds.has(result.item.id)) {
+            seenIds.add(result.item.id);
+            fuzzyMatches.push(result.item);
+          }
+        });
       });
 
       results = fuzzyMatches;
@@ -177,7 +182,7 @@ export const useRepoSearch = (repos: GitHubRepo[] = []) => {
     }
 
     return results;
-  }, [debouncedSearchQuery, filters, repos, fuseInstance]);
+  }, [activeSearchQuery, filters, repos, fuseInstance]);
 
   // Optimized filter update functions
   const updateFilters = useCallback((newFilters: RepoFilter) => {
@@ -206,6 +211,20 @@ export const useRepoSearch = (repos: GitHubRepo[] = []) => {
   const availableTopics = useMemo(() => 
     [...new Set(repos.flatMap(repo => repo.topics))].sort()
   , [repos]);
+
+  const availableTopTags = useMemo(() => {
+    const topicCounts = repos.reduce((acc, repo) => {
+      repo.topics.forEach(topic => {
+        acc[topic] = (acc[topic] || 0) + 1;
+      });
+      return acc;
+    }, {} as Record<string, number>);
+    
+    return Object.entries(topicCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([topic]) => topic);
+  }, [repos]);
 
   const availableTechnologies = useMemo(() => {
     const technologies = new Set<string>();
@@ -260,16 +279,18 @@ export const useRepoSearch = (repos: GitHubRepo[] = []) => {
   return {
     searchQuery,
     setSearchQuery,
+    triggerSearch,
     filters,
     setFilters: updateFilters,
     filteredRepos,
     clearFilters,
     totalResults: filteredRepos.length,
-    isSearching: searchQuery !== debouncedSearchQuery,
+    isSearching: false,
     availableLanguages,
     availableAuthors,
     availableLicenses,
     availableTopics,
+    availableTopTags,
     availableTechnologies,
   };
 };

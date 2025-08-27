@@ -15,6 +15,7 @@ import { GitHubRepo } from "@/types/repo";
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
+  onSearch?: () => void;
   placeholder?: string;
   repos: GitHubRepo[];
 }
@@ -57,7 +58,7 @@ const getSuggestionLabel = (type: SuggestionItem['type']) => {
   }
 };
 
-export const SearchBar = ({ value, onChange, placeholder = "What do you want to build?", repos }: SearchBarProps) => {
+export const SearchBar = ({ value, onChange, onSearch, placeholder = "What do you want to build?", repos }: SearchBarProps) => {
   const [open, setOpen] = useState(false);
   const { getSuggestions } = useAutocomplete(repos);
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
@@ -123,6 +124,12 @@ export const SearchBar = ({ value, onChange, placeholder = "What do you want to 
             placeholder={placeholder}
             value={value}
             onValueChange={onChange}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && onSearch) {
+                onSearch();
+                setOpen(false);
+              }
+            }}
           />
           <CommandList>
             <CommandEmpty>No suggestions found.</CommandEmpty>

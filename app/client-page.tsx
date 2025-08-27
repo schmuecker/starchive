@@ -50,6 +50,7 @@ export default function ClientHomePage({ initialRepos }: ClientHomePageProps) {
   const {
     searchQuery,
     setSearchQuery,
+    triggerSearch,
     filters,
     setFilters,
     filteredRepos,
@@ -71,6 +72,7 @@ export default function ClientHomePage({ initialRepos }: ClientHomePageProps) {
         <SearchBar 
           value={searchQuery} 
           onChange={setSearchQuery} 
+          onSearch={triggerSearch}
           placeholder="What do you want to build?" 
           repos={filteredRepos} 
         />
