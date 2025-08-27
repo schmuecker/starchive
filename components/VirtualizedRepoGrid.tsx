@@ -88,8 +88,8 @@ export const RepoGrid = memo(({ repos, onTagClick }: RepoGridProps) => {
             className="py-3"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-              {rowRepos.map((repo) => (
-                <div key={repo.id}>
+              {rowRepos.map((repo, repoIndex) => (
+                <div key={`${virtualRow.index}-${startIndex + repoIndex}-${repo.id}`}>
                   <RepoCard repo={repo} onTagClick={onTagClick} />
                 </div>
               ))}
