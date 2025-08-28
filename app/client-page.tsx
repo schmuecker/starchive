@@ -138,7 +138,10 @@ export default function ClientHomePage({ initialRepos }: ClientHomePageProps) {
       </div>
 
       {/* Content Grid */}
-      <RepoGrid repos={filteredRepos} onTagClick={setSearchQuery} />
+      <RepoGrid repos={filteredRepos} onTagClick={(tag) => {
+        setSearchQuery(tag);
+        triggerSearch();
+      }} />
     </>
   );
 }
