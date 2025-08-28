@@ -8,6 +8,10 @@
     "browsermcp": {
       "type": "local",
       "command": ["bun", "x", "@browsermcp/mcp@latest"]
+    },
+    "context7": {
+      "type": "local",
+      "command": ["npx", "-y", "@upstash/context7-mcp"]
     }
   }
 }
