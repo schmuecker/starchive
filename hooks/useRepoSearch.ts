@@ -27,8 +27,8 @@ export const useRepoSearch = (repos: GitHubRepo[] = []) => {
     maxIssues: null,
   });
 
-  const triggerSearch = useCallback(() => {
-    setActiveSearchQuery(searchQuery);
+  const triggerSearch = useCallback((query?: string) => {
+    setActiveSearchQuery(query !== undefined ? query : searchQuery);
   }, [searchQuery]);
 
   // Memoize Fuse instance for better performance

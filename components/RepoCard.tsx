@@ -96,7 +96,7 @@ export const RepoCard = ({ repo, onTagClick }: RepoCardProps) => {
                   <Badge 
                     key={topic} 
                     variant="secondary" 
-                    className="text-xs px-2 py-0.5 h-5 flex-shrink-0 cursor-pointer hover:bg-secondary/80 transition-colors"
+                    className="text-xs px-2 py-0.5 h-5 flex-shrink-0 cursor-pointer hover:bg-primary/10 hover:border-primary/10 hover:shadow-sm transition-all duration-200"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
