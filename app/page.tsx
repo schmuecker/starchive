@@ -61,9 +61,9 @@ export default async function HomePage() {
         {/* Hero Section */}
         <div className="text-center pt-12 pb-12">
           <h2 className="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
-            Discover the Right Tools
+            Discover handpicked building blocks
             <br />
-            for Your Next Project
+            for your next project
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-12 leading-relaxed">
             Starchive surfaces the best from my GitHub stars—tools and libraries chosen for quality and creativity. Describe your project and get matched with tech that fits.
