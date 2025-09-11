@@ -102,7 +102,8 @@ export const useRepoSearch = (repos: GitHubRepo[] = []) => {
         const techText = [
           ...repo.topics,
           repo.description || "",
-          repo.name
+          repo.name,
+          repo.language || ""
         ].join(" ").toLowerCase();
         
         return filters.technology.every(tech => 
@@ -238,7 +239,8 @@ export const useRepoSearch = (repos: GitHubRepo[] = []) => {
         const techText = [
           ...repo.topics,
           repo.description || "",
-          repo.name
+          repo.name,
+          repo.language || ""
         ].join(" ").toLowerCase();
         
         return techText.includes(tech.toLowerCase()) || 

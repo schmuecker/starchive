@@ -123,7 +123,7 @@ export const SearchBar = ({ value, onChange, onSearch, placeholder = "What do yo
 
       <CommandDialog open={open} onOpenChange={(newOpen) => {
         setOpen(newOpen);
-        if (!newOpen && value.trim() && onSearch) {
+        if (!newOpen && onSearch) {
           onSearch();
         }
       }}>

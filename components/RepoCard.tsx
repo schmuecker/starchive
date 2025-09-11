@@ -48,7 +48,7 @@ export const RepoCard = ({ repo, onTagClick }: RepoCardProps) => {
       rel="noopener noreferrer"
       className="block h-full no-underline"
     >
-      <Card className="group h-full flex flex-col smooth-transition hover:hover-shadow bg-card border border-border/50 overflow-hidden cursor-pointer">
+      <Card className="group h-full flex flex-col smooth-transition hover:scale-[1.02] bg-card border border-border/50 overflow-hidden cursor-pointer">
         {/* Thumbnail */}
         <div className="aspect-[4/3] w-full overflow-hidden bg-muted/30 flex-shrink-0">
           <img 
