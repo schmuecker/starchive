@@ -176,18 +176,18 @@ export const FilterBar = ({
                       <Code className="h-3 w-3" />
                       Programming Languages
                     </Label>
-                    <div className="flex flex-wrap gap-1">
-                      {availableLanguages.slice(0, 15).map(language => (
-                        <Button
-                          key={language}
-                          variant={filters.language.includes(language) ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => toggleArrayFilter('language', language)}
-                          className="h-6 px-2 text-xs"
-                        >
-                          {language}
-                        </Button>
-                      ))}
+                     <div className="flex flex-wrap gap-1">
+                       {availableLanguages.map(language => (
+                         <Button
+                           key={language}
+                           variant={filters.language.includes(language) ? "default" : "outline"}
+                           size="sm"
+                           onClick={() => toggleArrayFilter('language', language)}
+                           className="h-6 px-2 text-xs"
+                         >
+                           {language}
+                         </Button>
+                       ))}
                     </div>
                   </div>
 
